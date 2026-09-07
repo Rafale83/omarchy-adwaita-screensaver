@@ -2,6 +2,7 @@
 
 <p align="center">
   <img src="preview.gif" width="640" height="480" alt="Hires Screensaver — blackhole, 60s">
+  <br>
   <img src="preview-burn.gif" width="640" height="480" alt="Hires Screensaver — burn, 60s">
 </p>
 
