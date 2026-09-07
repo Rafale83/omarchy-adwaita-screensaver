@@ -1,5 +1,9 @@
 # Omarchy Adwaita hires screensaver · v0.1
 
+<p align="center">
+  <img src="preview.png" width="640" height="480" alt="blackhole — rafa @ cresus in Adwaita mosaic">
+</p>
+
 High-resolution `█▄▀` mosaic screensaver for [Omarchy](https://omarchy.org), drawn from **Adwaita Mono**.  
 Économiseur d’écran mosaïque haute résolution pour Omarchy, tracé en **Adwaita Mono**.
 
