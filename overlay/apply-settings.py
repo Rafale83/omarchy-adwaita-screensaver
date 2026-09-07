@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 HOME = Path.home()
@@ -60,17 +61,55 @@ def save_settings(data: dict) -> None:
     atomic_write(SETTINGS, json.dumps(data, indent=2) + "\n")
 
 
-def patch_idle(screensaver: int, lock: int) -> None:
+def patch_idle(screensaver: int, lock: int) -> bool:
+    """Write idle.screensaver / idle.lock. Returns True if the file changed."""
+    screensaver = int(screensaver)
+    lock = int(lock)
     if not SHELL.is_file():
-        return
+        return False
     try:
         doc = json.loads(SHELL.read_text())
     except json.JSONDecodeError:
-        return
+        return False
     idle = doc.setdefault("idle", {})
-    idle["screensaver"] = int(screensaver)
-    idle["lock"] = int(lock)
-    atomic_write(SHELL, json.dumps(doc, indent=2) + "\n")
+    if idle.get("screensaver") == screensaver and idle.get("lock") == lock:
+        return False
+    idle["screensaver"] = screensaver
+    idle["lock"] = lock
+    atomic_write(SHELL, json.dumps(doc, indent=2, ensure_ascii=False) + "\n")
+    return True
+
+
+def confirm_idle(screensaver: int, lock: int, timeout: float = 1.5) -> str:
+    """Wait until omarchy-shell reports the new delays, or say it did not."""
+    screensaver = int(screensaver)
+    lock = int(lock)
+    deadline = time.time() + timeout
+    last = "unavailable"
+    while time.time() < deadline:
+        try:
+            out = subprocess.run(
+                ["omarchy-shell", "idle", "status"],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=2,
+            ).stdout
+            st = json.loads(out)
+            live_s = int(st.get("screensaver"))
+            live_l = int(st.get("lock"))
+            last = f"{live_s}/{live_l}"
+            if live_s == screensaver and live_l == lock:
+                return f"idle live {live_s}s screensaver, {live_l}s lock"
+        except Exception as exc:
+            last = str(exc)
+        time.sleep(0.1)
+    return f"idle written {screensaver}/{lock}s but shell still {last}"
+
+
+def artwork_changed(old: dict, new: dict) -> bool:
+    keys = ("source", "text", "logo", "photo")
+    return any((old.get(k) or "") != (new.get(k) or "") for k in keys)
 
 
 def run(cmd: list[str]) -> None:
@@ -90,7 +129,18 @@ def apply_artwork(data: dict) -> None:
         photo = Path(str(data.get("photo") or "")).expanduser()
         if not photo.is_file():
             raise SystemExit("no photo selected")
-        run([sys.executable, str(CONVERT), str(photo), "--photo"])
+        run(
+            [
+                sys.executable,
+                str(CONVERT),
+                str(photo),
+                "--photo",
+                "--cols",
+                "360",
+                "--max-rows",
+                "130",
+            ]
+        )
         return
     text = str(data.get("text") or "").strip()
     if not text and MESSAGE.is_file():
@@ -119,21 +169,27 @@ def main() -> None:
         incoming = json.loads(Path(sys.argv[2]).read_text())
     elif not sys.stdin.isatty():
         incoming = json.loads(sys.stdin.read() or "{}")
-    data = load_settings()
+    previous = load_settings()
+    data = dict(previous)
     data.update(incoming)
     save_settings(data)
-    patch_idle(data.get("screensaverSeconds", 150), data.get("lockSeconds", 300))
-    try:
-        apply_artwork(data)
-    except SystemExit as exc:
-        if data.get("source") == "text" and not str(data.get("text") or "").strip():
-            print("saved timings only")
-            bounce_screensaver()
-            return
-        raise exc
-    bounce_screensaver()
-    subprocess.run(["omarchy-notification-send", "-g", "Hires screensaver updated"], check=False)
-    print("ok")
+    ss = data.get("screensaverSeconds", 150)
+    lk = data.get("lockSeconds", 300)
+    patch_idle(ss, lk)
+    idle_msg = confirm_idle(ss, lk)
+    rebuilt = False
+    if artwork_changed(previous, data):
+        try:
+            apply_artwork(data)
+            rebuilt = True
+        except SystemExit as exc:
+            if data.get("source") == "text" and not str(data.get("text") or "").strip():
+                print(idle_msg)
+                return
+            raise exc
+        bounce_screensaver()
+        subprocess.run(["omarchy-notification-send", "-g", "Hires screensaver updated"], check=False)
+    print(idle_msg + (" · artwork updated" if rebuilt else ""))
 
 
 if __name__ == "__main__":

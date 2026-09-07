@@ -41,8 +41,15 @@ branding="$HOME/.config/omarchy/branding/screensaver.txt"
 frame_rate="${SS_FRAME_RATE:-260}"
 settings="$HOME/.config/omarchy/screensaver-overlay/settings.json"
 exclude_args=()
+color_args=()
 if [[ -f $settings ]]; then
-  mapfile -t excludes < <(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print("\n".join(d.get("excludeEffects") or []))' "$settings")
+  mapfile -t meta < <(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d.get("source") or "text"); print("\n".join(d.get("excludeEffects") or []))' "$settings")
+  source="${meta[0]:-text}"
+  excludes=("${meta[@]:1}")
+  if [[ $source == photo ]]; then
+    # Keep the photo's ANSI truecolor; effect palettes would flatten it to 2 tones.
+    color_args=(--existing-color-handling always)
+  fi
   if ((${#excludes[@]})); then
     exclude_args=(--exclude-effects "${excludes[@]}")
   fi
@@ -53,6 +60,7 @@ while true; do
     --frame-rate "$frame_rate" \
     --canvas-width "$cols" --canvas-height "$rows" \
     --reuse-canvas --anchor-canvas c --anchor-text c \
+    "${color_args[@]}" \
     --random-effect "${exclude_args[@]}" --no-eol --no-restore-cursor &
 
   while pgrep -t "${tty#/dev/}" -x ttfx >/dev/null; do

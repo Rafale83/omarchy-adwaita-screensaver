@@ -20,7 +20,15 @@ L’économiseur d’écran d’Omarchy est juste magnifique mais :
 
 Ce module s’attaque à ces trois points. Il **n’embarque aucune charte personnelle** : tu fournis les mots ; il les rasterise en mosaïque dense de blocs et les joue avec `ttfx` sur la vraie grille plein écran (pas le pty 80×24 que le lanceur d’origine capture trop souvent).
 
-**v0.2** — widget de réglages.
+### Notes de version — v0.2
+
+- Widget barre : texte, logo IA, photo, délais d’inactivité / verrouillage Omarchy, exclusion d’effets moches
+- Les réglages s’appliquent tout de suite (plus besoin de relancer le shell)
+- Aperçu **plein écran** via le lanceur local (fini le timbre-poste 80×24)
+- Logos = **marque seule**, pas de wordmark. Grok sans le texte « Grok ». DeepSeek = baleine. Aussi : OpenAI, Claude, Gemini, Kimi, GLM, Qwen, Mistral, Llama
+- Photos en ASCII **truecolor** (demi-blocs 24 bits), plus une silhouette deux couleurs. JPEG de téléphone : EXIF, 25 Mo max, réduction auto
+- Les délais idle sont écrits dans `shell.json` et confirmés par le service Omarchy, sans reconvertir la photo
+- Aucune photo ni charte personnelle n’est publiée
 
 ### Ce que ça fait
 
@@ -33,7 +41,7 @@ Ce module s’attaque à ces trois points. Il **n’embarque aucune charte perso
 
 Le verrouillage reste celui d’Omarchy (mot de passe, empreinte, FIDO2 — ce que tu as déjà configuré). Le panneau ne change que les délais `idle.screensaver` et `idle.lock`.
 
-Les photos (JPEG de téléphone compris) sont bornées : 25 Mo, orientation EXIF, réduction auto, étirement de contraste, mosaïque demi-blocs ~400 colonnes.
+Les photos (JPEG de téléphone compris) sont bornées : 25 Mo, orientation EXIF, réduction auto, mosaïque demi-blocs truecolor. Les logos SVG du module sont des marques [Lobe Icons](https://github.com/lobehub/lobe-icons) (MIT).
 
 ### Prérequis
 
@@ -114,7 +122,15 @@ Omarchy’s screensaver is genuinely magnificent, but:
 
 This module addresses those three points. It does **not** ship any personal branding. You supply the words; it rasterizes them into a dense block mosaic and plays them with `ttfx` on the real fullscreen grid (not the 80×24 pty that the stock launcher often captures).
 
-**v0.2** — settings widget.
+### Release notes — v0.2
+
+- Bar widget: text, AI logo, photo, Omarchy idle / lock delays, exclude ugly effects
+- Settings apply immediately (no shell restart)
+- **Fullscreen** preview via the local launcher (no more 80×24 postage stamp)
+- Logos are **marks only**, no wordmarks. Grok without the “Grok” letters. DeepSeek is the whale. Also: OpenAI, Claude, Gemini, Kimi, GLM, Qwen, Mistral, Llama
+- Photos become **truecolor** ASCII (24-bit half-blocks), not a two-tone silhouette. Phone JPEGs: EXIF, 25 MB cap, auto-downscale
+- Idle delays are written to `shell.json` and confirmed by the Omarchy idle service, without reconverting the photo
+- No user photos or personal branding are published
 
 ### What it does
 
@@ -127,7 +143,7 @@ This module addresses those three points. It does **not** ship any personal bran
 
 Locking stays Omarchy's lock screen (password, fingerprint, FIDO2 — whatever you already set up). The panel only edits `idle.screensaver` and `idle.lock`.
 
-Photos (including phone JPEGs) are gated: 25 MB cap, EXIF orientation, auto-downscale, contrast stretch, ~400-column half-block mosaic.
+Photos (including phone JPEGs) are gated: 25 MB cap, EXIF orientation, auto-downscale, truecolor half-block mosaic. Bundled SVG logos are [Lobe Icons](https://github.com/lobehub/lobe-icons) marks (MIT).
 
 ### Requirements
 

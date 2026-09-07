@@ -84,13 +84,28 @@ Panel {
     if (textField) textField.text = next.text || ""
   }
 
+  function numberFieldValue(field, fallback) {
+    if (!field) return fallback
+    var spin = field.field
+    if (!spin) return field.value
+    var raw = ""
+    try {
+      raw = spin.contentItem ? String(spin.contentItem.text) : ""
+    } catch (e) {}
+    var n = parseInt(raw, 10)
+    if (isNaN(n)) n = spin.value
+    if (n < spin.from) n = spin.from
+    if (n > spin.to) n = spin.to
+    return n
+  }
+
   function snapshotDraft() {
     var d = JSON.parse(JSON.stringify(root.draft))
     d.text = textField ? textField.text : d.text
     if (sourceDropdown) d.source = sourceDropdown.value
     if (logoDropdown) d.logo = logoDropdown.value
-    if (screensaverField) d.screensaverSeconds = screensaverField.value
-    if (lockField) d.lockSeconds = lockField.value
+    d.screensaverSeconds = root.numberFieldValue(screensaverField, d.screensaverSeconds)
+    d.lockSeconds = root.numberFieldValue(lockField, d.lockSeconds)
     if (excludeSelect) d.excludeEffects = excludeSelect.values
     root.draft = d
     return d
@@ -136,10 +151,10 @@ Panel {
     onExited: function(code) {
       root.applying = false
       if (code === 0) {
-        root.statusText = "Saved"
+        root.statusText = String(stdout.text || "Saved").trim()
         settingsFile.reload()
       } else {
-        root.statusText = String(stderr.text || "apply failed").trim()
+        root.statusText = String(stderr.text || stdout.text || "apply failed").trim()
       }
     }
   }
@@ -258,7 +273,7 @@ Panel {
             id: logoDropdown
             visible: root.draft.source === "logo"
             width: parent.width - Style.space(32)
-            label: "AI parish"
+            label: "AI logo"
             value: root.draft.logo
             options: Model.LOGOS
             onChanged: function(v) {
@@ -280,7 +295,7 @@ Panel {
             width: parent.width - Style.space(32)
             wrapMode: Text.WordWrap
             textFormat: Text.PlainText
-            text: "Phone photos are fine. EXIF rotation, 25 MB cap, auto-downscale, contrast stretch, half-block mosaic."
+            text: "Phone photos are fine. EXIF rotation, 25 MB cap, auto-downscale, truecolor ASCII (not 2-tone)."
             color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
             font.pixelSize: Style.font.caption
           }
@@ -291,7 +306,7 @@ Panel {
             width: parent.width - Style.space(32)
             wrapMode: Text.WordWrap
             textFormat: Text.PlainText
-            text: "Uses Omarchy's lock screen (password, fingerprint, FIDO2 — whatever you already set up). This only changes idle delays."
+            text: "Uses Omarchy's lock screen. Delays are seconds since you went idle, and apply immediately. Stay Awake, video, or an active agent can still inhibit idle."
             color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
             font.pixelSize: Style.font.caption
           }
