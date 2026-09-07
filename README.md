@@ -21,7 +21,7 @@ The module does **not** ship any personal branding. You supply the words; it ras
 ## Install
 
 ```bash
-git clone https://github.com/<you>/omarchy-adwaita-screensaver.git
+git clone https://github.com/Rafale83/omarchy-adwaita-screensaver.git
 cd omarchy-adwaita-screensaver
 ./install.sh
 ```
