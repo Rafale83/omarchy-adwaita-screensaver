@@ -1,0 +1,55 @@
+#!/bin/bash
+# Wait for the real fullscreen grid, then run ttfx on that canvas.
+# Packaged omarchy-screensaver can start ttfx at 80x24 if resize is slow.
+
+screensaver_in_focus() {
+  hyprctl activewindow -j | jq -e '.class == "org.omarchy.screensaver"' >/dev/null 2>&1
+}
+
+exit_screensaver() {
+  hyprctl eval 'hl.config({ cursor = { invisible = false } })' &>/dev/null || hyprctl keyword cursor:invisible false &>/dev/null || true
+  pkill -x ttfx 2>/dev/null
+  ps -C foot -o pid=,args= | awk '/screensaver.ini/ {print $1}' | while read -r p; do kill "$p" 2>/dev/null; done
+  exit 0
+}
+
+trap exit_screensaver SIGINT SIGTERM SIGHUP SIGQUIT
+printf '\033]11;rgb:00/00/00\007'
+hyprctl eval 'hl.config({ cursor = { invisible = true } })' &>/dev/null || hyprctl keyword cursor:invisible true &>/dev/null
+
+tty=$(tty 2>/dev/null)
+
+rows=0
+cols=0
+deadline=$((SECONDS + 5))
+while ((SECONDS < deadline)); do
+  size=$(stty size 2>/dev/null) || size=""
+  rows=${size% *}
+  cols=${size#* }
+  if [[ ${cols:-0} -gt 200 && ${rows:-0} -gt 60 ]]; then
+    break
+  fi
+  sleep 0.03
+done
+
+if [[ ${cols:-0} -lt 80 ]]; then
+  cols=80
+  rows=24
+fi
+
+branding="$HOME/.config/omarchy/branding/screensaver.txt"
+frame_rate="${SS_FRAME_RATE:-260}"
+
+while true; do
+  /usr/bin/ttfx -i "$branding" \
+    --frame-rate "$frame_rate" \
+    --canvas-width "$cols" --canvas-height "$rows" \
+    --reuse-canvas --anchor-canvas c --anchor-text c \
+    --random-effect --no-eol --no-restore-cursor &
+
+  while pgrep -t "${tty#/dev/}" -x ttfx >/dev/null; do
+    if read -n1 -t 1 || ! screensaver_in_focus; then
+      exit_screensaver
+    fi
+  done
+done
