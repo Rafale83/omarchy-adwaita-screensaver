@@ -49,9 +49,15 @@ def load_settings() -> dict:
     return data
 
 
+def atomic_write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text)
+    tmp.replace(path)
+
+
 def save_settings(data: dict) -> None:
-    SETTINGS.parent.mkdir(parents=True, exist_ok=True)
-    SETTINGS.write_text(json.dumps(data, indent=2) + "\n")
+    atomic_write(SETTINGS, json.dumps(data, indent=2) + "\n")
 
 
 def patch_idle(screensaver: int, lock: int) -> None:
@@ -64,7 +70,7 @@ def patch_idle(screensaver: int, lock: int) -> None:
     idle = doc.setdefault("idle", {})
     idle["screensaver"] = int(screensaver)
     idle["lock"] = int(lock)
-    SHELL.write_text(json.dumps(doc, indent=2) + "\n")
+    atomic_write(SHELL, json.dumps(doc, indent=2) + "\n")
 
 
 def run(cmd: list[str]) -> None:
@@ -97,6 +103,14 @@ def apply_artwork(data: dict) -> None:
     run([sys.executable, str(GENERATE), *lines])
 
 
+def bounce_screensaver() -> None:
+    subprocess.run(["pkill", "-x", "ttfx"], check=False)
+    subprocess.run(
+        ["bash", "-c", "ps -C foot -o pid=,args= | awk '/screensaver.ini/{print $1}' | xargs -r kill"],
+        check=False,
+    )
+
+
 def main() -> None:
     incoming = {}
     if sys.argv[1:] and sys.argv[1] == "--json":
@@ -109,7 +123,16 @@ def main() -> None:
     data.update(incoming)
     save_settings(data)
     patch_idle(data.get("screensaverSeconds", 150), data.get("lockSeconds", 300))
-    apply_artwork(data)
+    try:
+        apply_artwork(data)
+    except SystemExit as exc:
+        if data.get("source") == "text" and not str(data.get("text") or "").strip():
+            print("saved timings only")
+            bounce_screensaver()
+            return
+        raise exc
+    bounce_screensaver()
+    subprocess.run(["omarchy-notification-send", "-g", "Hires screensaver updated"], check=False)
     print("ok")
 
 

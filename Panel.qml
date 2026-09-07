@@ -81,14 +81,32 @@ Panel {
       for (var k in parsed) next[k] = parsed[k]
     } catch (e) {}
     root.draft = next
+    if (textField) textField.text = next.text || ""
+  }
+
+  function snapshotDraft() {
+    var d = JSON.parse(JSON.stringify(root.draft))
+    d.text = textField ? textField.text : d.text
+    if (sourceDropdown) d.source = sourceDropdown.value
+    if (logoDropdown) d.logo = logoDropdown.value
+    if (screensaverField) d.screensaverSeconds = screensaverField.value
+    if (lockField) d.lockSeconds = lockField.value
+    if (excludeSelect) d.excludeEffects = excludeSelect.values
+    root.draft = d
+    return d
+  }
+
+  function scheduleApply() {
+    applyDebounce.restart()
   }
 
   function apply() {
+    var d = snapshotDraft()
     root.applying = true
     root.statusText = "Applying…"
     applyProc.running = false
-    applyProc.command = ["python3", root.overlayDir + "/apply-settings.py", "--json", JSON.stringify(root.draft)]
-    applyProc.running = true
+    applyProc.command = ["python3", root.overlayDir + "/apply-settings.py", "--json", JSON.stringify(d)]
+    Qt.callLater(function() { applyProc.running = true })
   }
 
   function pickPhoto() {
@@ -127,6 +145,13 @@ Panel {
   }
 
   Timer {
+    id: applyDebounce
+    interval: 400
+    repeat: false
+    onTriggered: root.apply()
+  }
+
+  Timer {
     id: previewTimer
     interval: 250
     repeat: false
@@ -148,6 +173,7 @@ Panel {
       d.source = "photo"
       d.photo = path
       root.draft = d
+      root.scheduleApply()
     }
   }
 
@@ -207,6 +233,7 @@ Panel {
           PanelSectionHeader { text: "Artwork" }
 
           Dropdown {
+            id: sourceDropdown
             width: parent.width - Style.space(32)
             label: "Source"
             value: root.draft.source
@@ -215,6 +242,7 @@ Panel {
               var d = JSON.parse(JSON.stringify(root.draft))
               d.source = v
               root.draft = d
+              root.scheduleApply()
             }
           }
 
@@ -222,16 +250,12 @@ Panel {
             id: textField
             visible: root.draft.source === "text"
             width: parent.width - Style.space(32)
-            placeholderText: "Line one\\nLine two"
-            text: root.draft.text
-            onEditingFinished: {
-              var d = JSON.parse(JSON.stringify(root.draft))
-              d.text = text
-              root.draft = d
-            }
+            placeholderText: "hello world"
+            onEditingFinished: root.scheduleApply()
           }
 
           Dropdown {
+            id: logoDropdown
             visible: root.draft.source === "logo"
             width: parent.width - Style.space(32)
             label: "AI parish"
@@ -241,6 +265,7 @@ Panel {
               var d = JSON.parse(JSON.stringify(root.draft))
               d.logo = v
               root.draft = d
+              root.scheduleApply()
             }
           }
 
@@ -272,6 +297,7 @@ Panel {
           }
 
           NumberField {
+            id: screensaverField
             label: "Screensaver after (seconds)"
             value: root.draft.screensaverSeconds
             from: 10
@@ -281,10 +307,12 @@ Panel {
               var d = JSON.parse(JSON.stringify(root.draft))
               d.screensaverSeconds = v
               root.draft = d
+              root.scheduleApply()
             }
           }
 
           NumberField {
+            id: lockField
             label: "Lock after (seconds)"
             value: root.draft.lockSeconds
             from: 10
@@ -294,12 +322,14 @@ Panel {
               var d = JSON.parse(JSON.stringify(root.draft))
               d.lockSeconds = v
               root.draft = d
+              root.scheduleApply()
             }
           }
 
           PanelSectionHeader { text: "Ugly effects" }
 
           MultiSelect {
+            id: excludeSelect
             width: parent.width - Style.space(32)
             label: "Exclude from random rotation"
             values: root.draft.excludeEffects
@@ -308,6 +338,7 @@ Panel {
               var d = JSON.parse(JSON.stringify(root.draft))
               d.excludeEffects = vals
               root.draft = d
+              root.scheduleApply()
             }
           }
 
