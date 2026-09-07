@@ -1,9 +1,8 @@
 # Omarchy Adwaita hires screensaver · v0.1
 
 <p align="center">
-  <img src="preview.gif" width="640" height="480" alt="Hires Screensaver — blackhole, 60s">
-  <br>
-  <img src="preview-burn.gif" width="640" height="480" alt="Hires Screensaver — burn, 60s">
+  <img src="preview.gif" width="400" height="300" alt="Hires Screensaver — blackhole, 60s">
+  <img src="preview-burn.gif" width="400" height="300" alt="Hires Screensaver — burn, 60s">
 </p>
 
 High-resolution `█▄▀` mosaic screensaver for [Omarchy](https://omarchy.org), drawn from **Adwaita Mono**.  
