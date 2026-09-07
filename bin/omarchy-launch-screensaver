@@ -40,4 +40,5 @@ for m in $(hyprctl monitors -j | jq -r '.[] | .name'); do
   wait_for_screensaver_window
 done
 
-hypr_focus_monitor "$focused"
+hyprctl dispatch focuswindow "class:org.omarchy.screensaver" >/dev/null 2>&1 || true
+hyprctl dispatch fullscreenstate 2 2 >/dev/null 2>&1 || hyprctl dispatch fullscreen 1 >/dev/null 2>&1 || true

@@ -67,6 +67,23 @@ def identify(path: Path) -> tuple[int, int]:
 
 
 def to_png(src: Path, dest: Path) -> None:
+    if src.suffix.lower() == ".svg":
+        magick(
+            "-density",
+            "512",
+            "-background",
+            "white",
+            str(src),
+            "-alpha",
+            "remove",
+            "-colorspace",
+            "sRGB",
+            "-resize",
+            f"{PREVIEW_EDGE}x{PREVIEW_EDGE}>",
+            "-strip",
+            str(dest),
+        )
+        return
     magick(
         str(src),
         "-auto-orient",
@@ -178,7 +195,8 @@ def main() -> None:
     size = src.stat().st_size
     if size > MAX_BYTES:
         fail(f"file too large ({size} bytes); max {MAX_BYTES}")
-    identify(src)
+    if src.suffix.lower() != ".svg":
+        identify(src)
 
     with tempfile.TemporaryDirectory() as tmp:
         png = Path(tmp) / "in.png"

@@ -97,7 +97,8 @@ Panel {
   }
 
   function preview() {
-    if (root.bar) root.bar.run("omarchy-launch-screensaver force")
+    root.close()
+    previewTimer.restart()
   }
 
   FileView {
@@ -122,6 +123,16 @@ Panel {
       } else {
         root.statusText = String(stderr.text || "apply failed").trim()
       }
+    }
+  }
+
+  Timer {
+    id: previewTimer
+    interval: 250
+    repeat: false
+    onTriggered: {
+      var launcher = Quickshell.env("HOME") + "/.local/bin/omarchy-launch-screensaver"
+      if (root.bar) root.bar.run(launcher + " force")
     }
   }
 
