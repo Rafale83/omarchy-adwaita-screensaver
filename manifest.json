@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "rafale83.hires-screensaver",
+  "name": "Hires screensaver",
+  "version": "0.2.0",
+  "author": "Rafael Pinilla",
+  "description": "High-res Adwaita mosaic screensaver with a settings panel for text, lock timing, effects, AI logos, and photos.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Hires screensaver",
+    "description": "Screensaver artwork, lock delay, and effect filters",
+    "category": "Desktop",
+    "defaultSection": "right",
+    "allowMultiple": false
+  }
+}

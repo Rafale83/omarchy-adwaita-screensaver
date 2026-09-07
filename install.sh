@@ -22,22 +22,31 @@ need() {
 need python3
 need ttfx
 need foot
+need magick
 python3 -c "import cairo" >/dev/null || {
   echo "missing python cairo (Arch: pacman -S python-cairo)" >&2
   exit 1
 }
 
-mkdir -p "$OVERLAY/default/foot" "$BIN"
+mkdir -p "$OVERLAY/default/foot" "$OVERLAY/logos" "$BIN"
 
 install -m 755 "$ROOT/overlay/run-foot.sh" "$OVERLAY/run-foot.sh"
 install -m 755 "$ROOT/overlay/generate-branding.py" "$OVERLAY/generate-branding.py"
+install -m 755 "$ROOT/overlay/convert-image.py" "$OVERLAY/convert-image.py"
+install -m 755 "$ROOT/overlay/apply-settings.py" "$OVERLAY/apply-settings.py"
 install -m 644 "$ROOT/overlay/fonts.conf" "$OVERLAY/fonts.conf"
 install -m 644 "$ROOT/overlay/default/foot/screensaver.ini" "$OVERLAY/default/foot/screensaver.ini"
+install -m 644 "$ROOT/overlay/logos/"*.svg "$OVERLAY/logos/"
 
 install -m 755 "$ROOT/bin/foot" "$BIN/foot"
 install -m 755 "$ROOT/bin/omarchy-launch-screensaver" "$BIN/omarchy-launch-screensaver"
 install -m 755 "$ROOT/bin/omarchy-screensaver" "$BIN/omarchy-screensaver"
 install -m 755 "$ROOT/bin/omarchy-adwaita-screensaver-generate" "$BIN/omarchy-adwaita-screensaver-generate"
+
+PLUGIN_ID="rafale83.hires-screensaver"
+PLUGIN_DST="$HOME/.config/omarchy/plugins/$PLUGIN_ID"
+mkdir -p "$PLUGIN_DST"
+install -m 644 "$ROOT/manifest.json" "$ROOT/BarWidget.qml" "$ROOT/Panel.qml" "$ROOT/Model.js" "$PLUGIN_DST/"
 
 strip_block() {
   local file="$1" begin="$2" end="$3"
@@ -98,8 +107,14 @@ if [[ -f $HYPR ]]; then
   hyprctl reload >/dev/null 2>&1 || true
 fi
 
-echo "Installed Adwaita hires screensaver."
-echo "It does not change your branding text. Generate a mosaic with:"
-echo "  omarchy-adwaita-screensaver-generate your text here"
-echo "or write ~/.config/omarchy/branding/screensaver-message then rerun that command."
+omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
+if omarchy plugin enable rafale83.hires-screensaver --section right >/dev/null 2>&1; then
+  echo "Enabled bar widget rafale83.hires-screensaver on the right."
+else
+  echo "Copied the widget. Enable it with: omarchy plugin enable rafale83.hires-screensaver --section right"
+fi
+
+echo "Installed Adwaita hires screensaver v0.2."
+echo "Open the bar widget to edit text, lock delays, effects, AI logos, or a photo."
+echo "CLI: omarchy-adwaita-screensaver-generate your text here"
 echo "Preview: omarchy-launch-screensaver force"
