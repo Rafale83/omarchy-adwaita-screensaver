@@ -53,6 +53,15 @@ Photos (including phone JPEGs) are gated: 25 MB cap, EXIF orientation, auto-down
 ### Install
 
 ```bash
+omarchy plugin add https://github.com/Rafale83/omarchy-adwaita-screensaver.git --enable
+~/.config/omarchy/plugins/rafale83.hires-screensaver/install.sh
+```
+
+`omarchy plugin add` installs the bar widget. `install.sh` installs the high-res Foot/`ttfx` overlay (wrappers on `PATH`, logos, photo converter). Both steps are required.
+
+Or clone and install from a working copy:
+
+```bash
 git clone https://github.com/Rafale83/omarchy-adwaita-screensaver.git
 cd omarchy-adwaita-screensaver
 ./install.sh
@@ -81,10 +90,12 @@ A key or mouse movement dismisses it. Idle still launches it through Omarchy.
 ### Uninstall
 
 ```bash
+~/.config/omarchy/plugins/rafale83.hires-screensaver/uninstall.sh
+# or, from a clone:
 ./uninstall.sh
 ```
 
-Leaves `~/.config/omarchy/branding/screensaver.txt` alone.
+That removes the wrappers, overlay, and bar widget (`omarchy plugin remove rafale83.hires-screensaver`). It leaves `~/.config/omarchy/branding/screensaver.txt` alone.
 
 ### Layout
 
@@ -155,6 +166,15 @@ Les photos (JPEG de téléphone compris) sont bornées : 25 Mo, orientation EXIF
 ### Installation
 
 ```bash
+omarchy plugin add https://github.com/Rafale83/omarchy-adwaita-screensaver.git --enable
+~/.config/omarchy/plugins/rafale83.hires-screensaver/install.sh
+```
+
+`omarchy plugin add` installe le widget barre. `install.sh` installe l’overlay Foot/`ttfx` haute résolution (wrappers sur le `PATH`, logos, convertisseur photo). Les deux étapes sont nécessaires.
+
+Ou clone puis install depuis une copie de travail :
+
+```bash
 git clone https://github.com/Rafale83/omarchy-adwaita-screensaver.git
 cd omarchy-adwaita-screensaver
 ./install.sh
@@ -183,10 +203,12 @@ Une touche ou un mouvement de souris le ferme. L’inactivité Omarchy le lance 
 ### Désinstallation
 
 ```bash
+~/.config/omarchy/plugins/rafale83.hires-screensaver/uninstall.sh
+# ou, depuis un clone :
 ./uninstall.sh
 ```
 
-Ne touche pas à `~/.config/omarchy/branding/screensaver.txt`.
+Ça retire les wrappers, l’overlay et le widget barre (`omarchy plugin remove rafale83.hires-screensaver`). Ne touche pas à `~/.config/omarchy/branding/screensaver.txt`.
 
 ### Fichiers
 
