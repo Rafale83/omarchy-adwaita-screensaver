@@ -1,4 +1,4 @@
-# Omarchy Adwaita hires screensaver · v0.3.0
+# Omarchy Adwaita hires screensaver · v0.3.1
 
 <p align="center">
   <img src="preview.gif" width="400" height="300" alt="Hires Screensaver — blackhole, 60s">
@@ -20,6 +20,10 @@ Omarchy’s screensaver is genuinely magnificent, but:
 
 This module addresses those three points. It does **not** ship any personal branding. You supply the words; it rasterizes them into a dense block mosaic and plays them with `ttfx` on the real fullscreen grid (not the 80×24 pty that the stock launcher often captures).
 
+### Release notes — v0.3.1
+
+- Corrects a wrong claim in the v0.2.3 notes: panel IPC was never broken. `omarchy-shell rafale83.hires-screensaver open|close|show|hide|toggle` works. On a multi-monitor setup the panel opens on the bar's monitor, which is not necessarily the focused one.
+
 ### Release notes — v0.3.0
 
 - **Choose the font.** The panel lists the installed monospace families and takes any other family typed in. Cairo's toy font API substitutes silently when a family is missing, so the generator asks fontconfig first and says what it fell back to.
@@ -37,7 +41,6 @@ This module addresses those three points. It does **not** ship any personal bran
 - The panel shows the installed version and checks GitHub for a newer one when it opens. When one exists, an **Update to vX.Y.Z** button runs `omarchy plugin update` followed by `install.sh`.
 - The result is judged on the `VERSION` file after the pull, not on the exit code: `omarchy plugin update` can succeed without pulling anything (already current, or local changes in the plugin folder), and the panel now says so instead of claiming a successful update.
 - `install.sh` now also copies `VERSION` into the plugin folder. Installing from a working copy left it out, so the panel had no version to read.
-- Known issue: `omarchy-shell rafale83.hires-screensaver open` still does nothing. The call is accepted but never reaches the panel; the cause is not established. Use the bar icon.
 - `install.sh` waits a second before `rescanPlugins`. Two reload paths landing together can race quickshell's engine teardown and segfault it in `IpcHandler` registration.
 
 ### Release notes — v0.2.2
@@ -185,6 +188,10 @@ L’économiseur d’écran d’Omarchy est juste magnifique mais :
 
 Ce module s’attaque à ces trois points. Il **n’embarque aucune charte personnelle** : tu fournis les mots ; il les rasterise en mosaïque dense de blocs et les joue avec `ttfx` sur la vraie grille plein écran (pas le pty 80×24 que le lanceur d’origine capture trop souvent).
 
+### Notes de version — v0.3.1
+
+- Corrige une affirmation fausse des notes v0.2.3 : l'IPC du panneau n'a jamais été cassé. `omarchy-shell rafale83.hires-screensaver open|close|show|hide|toggle` fonctionne. En multi-écran, le panneau s'ouvre sur le moniteur de la barre, qui n'est pas forcément celui qui a le focus.
+
 ### Notes de version — v0.3.0
 
 - **Choix de la police.** Le panneau liste les familles monospace installées et accepte n'importe quelle autre famille saisie à la main. L'API « toy » de cairo substitue silencieusement quand une famille manque, donc le générateur interroge fontconfig d'abord et annonce son repli.
@@ -202,7 +209,6 @@ Ce module s’attaque à ces trois points. Il **n’embarque aucune charte perso
 - Le panneau affiche la version installée et interroge GitHub à l'ouverture. Si une version plus récente existe, un bouton **Update to vX.Y.Z** enchaîne `omarchy plugin update` puis `install.sh`.
 - Le verdict se lit dans le fichier `VERSION` après le pull, pas dans le code de sortie : `omarchy plugin update` peut réussir sans rien tirer (déjà à jour, ou modifications locales dans le dossier du plugin), et le panneau le dit désormais au lieu d'annoncer une mise à jour qui n'a pas eu lieu.
 - `install.sh` copie désormais aussi `VERSION` dans le dossier du plugin. Une installation depuis une copie de travail l'omettait, et le panneau n'avait alors aucune version à lire.
-- Limitation connue : `omarchy-shell rafale83.hires-screensaver open` ne fait toujours rien. L'appel est accepté mais n'atteint jamais le panneau ; la cause n'est pas établie. Passer par l'icône de la barre.
 - `install.sh` attend une seconde avant `rescanPlugins`. Deux chemins de rechargement simultanés peuvent entrer en course avec l'arrêt du moteur quickshell et le faire segfauler dans l'enregistrement d'un `IpcHandler`.
 
 ### Notes de version — v0.2.2
