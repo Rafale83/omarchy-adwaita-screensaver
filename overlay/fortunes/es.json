@@ -1,0 +1,87 @@
+{
+  "lang": "es",
+  "name": "Español",
+  "note": "Short lines only: the mosaic rasterizes each line separately and stays legible at a few words.",
+  "fortunes": [
+    [
+      "Funcionaba",
+      "ayer"
+    ],
+    [
+      "En mi máquina",
+      "va bien"
+    ],
+    [
+      "Casi listo",
+      "hace tres días"
+    ],
+    [
+      "No es un fallo",
+      "es una función"
+    ],
+    [
+      "Se publica",
+      "el lunes"
+    ],
+    [
+      "Lee el",
+      "mensaje de error"
+    ],
+    [
+      "Sal fuera",
+      "un momento"
+    ],
+    [
+      "Nadie lee",
+      "esto"
+    ],
+    [
+      "Guarda",
+      "tu trabajo"
+    ],
+    [
+      "Compila",
+      "no lo toques"
+    ],
+    [
+      "Dos minutos",
+      "dijo él"
+    ],
+    [
+      "Provisional",
+      "desde 2019"
+    ],
+    [
+      "Todo bien",
+      "probablemente"
+    ],
+    [
+      "La culpa es",
+      "de la caché"
+    ],
+    [
+      "El café",
+      "es un plan"
+    ],
+    [
+      "Levántate",
+      "y estírate"
+    ],
+    [
+      "Luego",
+      "significa nunca"
+    ],
+    [
+      "El fallo",
+      "está en tu prueba"
+    ],
+    [
+      "Una cosa",
+      "más y ya"
+    ],
+    [
+      "Es tarde",
+      "vete a dormir"
+    ]
+  ]
+}

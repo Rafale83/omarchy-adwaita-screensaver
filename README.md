@@ -1,4 +1,4 @@
-# Omarchy Adwaita hires screensaver · v0.2.3
+# Omarchy Adwaita hires screensaver · v0.3.0
 
 <p align="center">
   <img src="preview.gif" width="400" height="300" alt="Hires Screensaver — blackhole, 60s">
@@ -19,6 +19,18 @@ Omarchy’s screensaver is genuinely magnificent, but:
 - The text deserves to be editable.
 
 This module addresses those three points. It does **not** ship any personal branding. You supply the words; it rasterizes them into a dense block mosaic and plays them with `ttfx` on the real fullscreen grid (not the 80×24 pty that the stock launcher often captures).
+
+### Release notes — v0.3.0
+
+- **Choose the font.** The panel lists the installed monospace families and takes any other family typed in. Cairo's toy font API substitutes silently when a family is missing, so the generator asks fontconfig first and says what it fell back to.
+- **Fortune cookies.** A new artwork source, in English, French, Spanish, German and Mandarin. A fresh quote is drawn before every effect cycle, not just at launch.
+- Quotes come from short bundled corpora written for the mosaic, blended with the system `fortune` when a database exists for that language. `~/.local/share/fortune/<lang>` is searched as well — `fortune` itself does not look there, but language packs are often unpacked into it.
+- System quotes are cleaned up before rasterizing: terminal colour codes stripped, `-- Source` and `-+- Source -+-` attributions dropped, and CJK wrapped by character since it has no spaces to wrap on.
+- Mandarin without CJK glyphs in the chosen font falls back to Noto Sans CJK automatically.
+- `omarchy-adwaita-screensaver-fortunes fr es zh` fetches the large Debian corpora into `~/.local/share/fortune/`. Opt-in and separate: `install.sh` never calls it, it needs no root, and the plugin works fully without it.
+- **Size control.** A `Size (mosaic columns)` field scales the artwork: the width in terminal cells, with the height following. 400 is the default and fills most of the screen; lower is smaller. Applies to text and fortunes.
+- `Model.js` no longer declares `.pragma library`. Quickshell evaluates such a script once per engine and does not re-evaluate it on a plugin hot reload, so the panel kept showing the previous `Source` list while the new file already sat on disk. The file holds only constants and pure functions, so a copy per importer costs nothing.
+- Fixed `omarchy-notification-send -g "Hires screensaver updated"`: `-g` takes a glyph, so the headline was consumed as one and the usage text printed on every apply.
 
 ### Release notes — v0.2.3
 
@@ -105,6 +117,26 @@ omarchy-launch-screensaver force
 
 A key or mouse movement dismisses it. Idle still launches it through Omarchy.
 
+### Optional: more fortunes
+
+Fortune cookies work out of the box — the plugin ships short quotes in English,
+French, Spanish, German and Mandarin, and needs nothing installed. If the system
+`fortune` command is present with a database for the chosen language, quotes are
+drawn from both.
+
+Debian used to package large French, Spanish and Chinese corpora. They were
+dropped after Debian 11 and have no Arch equivalent, so this fetches them from
+the Debian archive on request:
+
+```bash
+omarchy-adwaita-screensaver-fortunes fr es zh
+omarchy-adwaita-screensaver-fortunes --list
+```
+
+It writes only under `~/.local/share/fortune/<lang>/`, needs no root and refuses
+to run as it, and `install.sh` never calls it. Nothing else in the plugin
+touches the network.
+
 ### Uninstall
 
 ```bash
@@ -124,6 +156,9 @@ VERSION
 bin/omarchy-launch-screensaver
 bin/omarchy-screensaver               wait for fullscreen grid, then ttfx
 bin/omarchy-adwaita-screensaver-generate
+bin/omarchy-adwaita-screensaver-fortunes   optional Debian corpora fetcher
+overlay/pick-fortune.py
+overlay/fortunes/*.json
 BarWidget.qml / Panel.qml / Model.js / manifest.json
 overlay/generate-branding.py
 overlay/convert-image.py
@@ -149,6 +184,18 @@ L’économiseur d’écran d’Omarchy est juste magnifique mais :
 - Le texte mériterait d’être modifiable.
 
 Ce module s’attaque à ces trois points. Il **n’embarque aucune charte personnelle** : tu fournis les mots ; il les rasterise en mosaïque dense de blocs et les joue avec `ttfx` sur la vraie grille plein écran (pas le pty 80×24 que le lanceur d’origine capture trop souvent).
+
+### Notes de version — v0.3.0
+
+- **Choix de la police.** Le panneau liste les familles monospace installées et accepte n'importe quelle autre famille saisie à la main. L'API « toy » de cairo substitue silencieusement quand une famille manque, donc le générateur interroge fontconfig d'abord et annonce son repli.
+- **Fortune cookies.** Nouvelle source d'illustration, en anglais, français, espagnol, allemand et mandarin. Une nouvelle citation est tirée avant chaque cycle d'effet, pas seulement au lancement.
+- Les citations viennent de corpus courts embarqués, écrits pour la contrainte de la mosaïque, mélangés au `fortune` système quand une base existe pour la langue. `~/.local/share/fortune/<langue>` est également exploré — `fortune` n'y regarde pas, mais c'est là qu'on décompresse souvent les paquets de langue.
+- Les citations système sont nettoyées avant rastérisation : codes couleur du terminal retirés, attributions `-- Source` et `-+- Source -+-` supprimées, et découpage du CJK caractère par caractère, faute d'espaces où couper.
+- Le mandarin avec une police dépourvue de glyphes CJK bascule automatiquement sur Noto Sans CJK.
+- `omarchy-adwaita-screensaver-fortunes fr es zh` récupère les gros corpus Debian dans `~/.local/share/fortune/`. Opt-in et séparé : `install.sh` ne l'appelle jamais, aucun droit root, et le module fonctionne pleinement sans lui.
+- **Réglage de taille.** Un champ `Size (mosaic columns)` met l'illustration à l'échelle : la largeur en cellules du terminal, la hauteur suivant. 400 est le défaut et remplit presque l'écran ; plus bas est plus petit. S'applique au texte et aux fortunes.
+- `Model.js` ne déclare plus `.pragma library`. Quickshell évalue un tel script une seule fois par moteur et ne le réévalue pas au rechargement à chaud d'un plugin : le panneau continuait d'afficher l'ancienne liste `Source` alors que le nouveau fichier était déjà sur disque. Le fichier ne contient que des constantes et des fonctions pures, une copie par importateur ne coûte rien.
+- Correction de `omarchy-notification-send -g "Hires screensaver updated"` : `-g` attend un glyphe, le titre était donc avalé comme tel et l'aide s'affichait à chaque application.
 
 ### Notes de version — v0.2.3
 
@@ -235,6 +282,26 @@ omarchy-launch-screensaver force
 
 Une touche ou un mouvement de souris le ferme. L’inactivité Omarchy le lance toujours.
 
+### Optionnel : plus de citations
+
+Les fortune cookies fonctionnent tels quels — le module embarque des citations
+courtes en anglais, français, espagnol, allemand et mandarin, sans rien à
+installer. Si la commande système `fortune` est présente avec une base pour la
+langue choisie, les citations sont tirées des deux.
+
+Debian empaquetait de gros corpus français, espagnol et chinois. Ils ont été
+abandonnés après Debian 11 et n'ont pas d'équivalent Arch, d'où cette commande
+qui va les chercher dans l'archive Debian, sur demande :
+
+```bash
+omarchy-adwaita-screensaver-fortunes fr es zh
+omarchy-adwaita-screensaver-fortunes --list
+```
+
+Elle n'écrit que sous `~/.local/share/fortune/<langue>/`, ne demande pas les
+droits root et refuse de tourner sous root, et `install.sh` ne l'appelle jamais.
+Rien d'autre dans le module ne touche au réseau.
+
 ### Désinstallation
 
 ```bash
@@ -254,6 +321,9 @@ VERSION
 bin/omarchy-launch-screensaver
 bin/omarchy-screensaver               attend la grille plein écran, puis ttfx
 bin/omarchy-adwaita-screensaver-generate
+bin/omarchy-adwaita-screensaver-fortunes   optional Debian corpora fetcher
+overlay/pick-fortune.py
+overlay/fortunes/*.json
 BarWidget.qml / Panel.qml / Model.js / manifest.json
 overlay/generate-branding.py
 overlay/convert-image.py

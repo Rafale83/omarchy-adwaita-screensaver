@@ -43,9 +43,12 @@ settings="$HOME/.config/omarchy/screensaver-overlay/settings.json"
 exclude_args=()
 color_args=()
 if [[ -f $settings ]]; then
-  mapfile -t meta < <(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d.get("source") or "text"); print("\n".join(d.get("excludeEffects") or []))' "$settings")
+  mapfile -t meta < <(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d.get("source") or "text"); print(d.get("fortuneLang") or "en"); print(d.get("font") or "Adwaita Mono"); print(d.get("artworkCols") or 300); print("\n".join(d.get("excludeEffects") or []))' "$settings")
   source="${meta[0]:-text}"
-  excludes=("${meta[@]:1}")
+  fortune_lang="${meta[1]:-en}"
+  font="${meta[2]:-Adwaita Mono}"
+  art_cols="${meta[3]:-300}"
+  excludes=("${meta[@]:4}")
   if [[ $source == photo ]]; then
     # Keep the photo's ANSI truecolor; effect palettes would flatten it to 2 tones.
     color_args=(--existing-color-handling always)
@@ -55,7 +58,21 @@ if [[ -f $settings ]]; then
   fi
 fi
 
+overlay="$HOME/.config/omarchy/screensaver-overlay"
+
+# A new quote before every effect cycle, so the screensaver is not one joke on
+# repeat. Failures are silent: the previous mosaic stays on screen.
+redraw_fortune() {
+  [[ $source == fortune ]] || return 0
+  local lines
+  mapfile -t lines < <(python3 "$overlay/pick-fortune.py" --lang "$fortune_lang" 2>/dev/null)
+  ((${#lines[@]})) || return 0
+  python3 "$overlay/generate-branding.py" --font "$font" --cols "${art_cols:-300}" "${lines[@]}" >/dev/null 2>&1 || true
+}
+
 while true; do
+  redraw_fortune
+
   /usr/bin/ttfx -i "$branding" \
     --frame-rate "$frame_rate" \
     --canvas-width "$cols" --canvas-height "$rows" \

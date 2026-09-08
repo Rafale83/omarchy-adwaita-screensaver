@@ -42,6 +42,7 @@ remove_legacy_foot_shim
 rm -f "$HOME/.local/bin/omarchy-launch-screensaver"
 rm -f "$HOME/.local/bin/omarchy-screensaver"
 rm -f "$HOME/.local/bin/omarchy-adwaita-screensaver-generate"
+rm -f "$HOME/.local/bin/omarchy-adwaita-screensaver-fortunes"
 rm -rf "$HOME/.config/omarchy/screensaver-overlay"
 omarchy plugin disable rafale83.hires-screensaver >/dev/null 2>&1 || true
 rm -rf "$HOME/.config/omarchy/plugins/rafale83.hires-screensaver"

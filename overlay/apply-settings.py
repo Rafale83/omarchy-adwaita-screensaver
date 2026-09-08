@@ -14,6 +14,7 @@ SETTINGS = OVERLAY / "settings.json"
 SHELL = HOME / ".config/omarchy/shell.json"
 MESSAGE = HOME / ".config/omarchy/branding/screensaver-message"
 GENERATE = OVERLAY / "generate-branding.py"
+PICK_FORTUNE = OVERLAY / "pick-fortune.py"
 CONVERT = OVERLAY / "convert-image.py"
 LOGOS = OVERLAY / "logos"
 
@@ -37,6 +38,9 @@ DEFAULTS = {
     ],
     "screensaverSeconds": 150,
     "lockSeconds": 300,
+    "font": "Adwaita Mono",
+    "fortuneLang": "en",
+    "artworkCols": 300,
 }
 
 
@@ -108,7 +112,7 @@ def confirm_idle(screensaver: int, lock: int, timeout: float = 1.5) -> str:
 
 
 def artwork_changed(old: dict, new: dict) -> bool:
-    keys = ("source", "text", "logo", "photo")
+    keys = ("source", "text", "logo", "photo", "font", "fortuneLang", "artworkCols")
     return any((old.get(k) or "") != (new.get(k) or "") for k in keys)
 
 
@@ -116,8 +120,30 @@ def run(cmd: list[str]) -> None:
     subprocess.run(cmd, check=True)
 
 
+def draw_text(lines: list[str], font: str, cols: int) -> None:
+    run([sys.executable, str(GENERATE), "--font", font, "--cols", str(cols), *lines])
+
+
+def pick_fortune(lang: str) -> list[str]:
+    out = subprocess.run(
+        [sys.executable, str(PICK_FORTUNE), "--lang", lang or "en"],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    lines = [ln for ln in out.splitlines() if ln.strip()]
+    if not lines:
+        raise SystemExit(f"no fortune for language {lang!r}")
+    return lines
+
+
 def apply_artwork(data: dict) -> None:
     source = data.get("source") or "text"
+    font = str(data.get("font") or "Adwaita Mono")
+    cols = int(data.get("artworkCols") or 300)
+    if source == "fortune":
+        # One draw now, for the preview. bin/omarchy-screensaver redraws before
+        # every effect cycle, so the quote changes while the screensaver runs.
+        draw_text(pick_fortune(str(data.get("fortuneLang") or "en")), font, cols)
+        return
     if source == "logo":
         logo = str(data.get("logo") or "grok")
         svg = LOGOS / f"{logo}.svg"
@@ -150,7 +176,7 @@ def apply_artwork(data: dict) -> None:
         raise SystemExit("no text to render")
     MESSAGE.parent.mkdir(parents=True, exist_ok=True)
     MESSAGE.write_text("\n".join(lines) + "\n")
-    run([sys.executable, str(GENERATE), *lines])
+    draw_text(lines, font, cols)
 
 
 def bounce_screensaver() -> None:
@@ -188,7 +214,7 @@ def main() -> None:
                 return
             raise exc
         bounce_screensaver()
-        subprocess.run(["omarchy-notification-send", "-g", "Hires screensaver updated"], check=False)
+        subprocess.run(["omarchy-notification-send", "-g", "󰹑", "Hires screensaver updated"], check=False)
     print(idle_msg + (" · artwork updated" if rebuilt else ""))
 
 

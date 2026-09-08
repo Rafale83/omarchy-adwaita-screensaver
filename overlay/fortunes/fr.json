@@ -1,0 +1,87 @@
+{
+  "lang": "fr",
+  "name": "Français",
+  "note": "Short lines only: the mosaic rasterizes each line separately and stays legible at a few words.",
+  "fortunes": [
+    [
+      "Ça marchait",
+      "hier"
+    ],
+    [
+      "Chez moi",
+      "ça tourne"
+    ],
+    [
+      "Presque fini",
+      "depuis trois jours"
+    ],
+    [
+      "Ce n'est pas",
+      "un bug"
+    ],
+    [
+      "On livre",
+      "lundi"
+    ],
+    [
+      "Relis",
+      "le message d'erreur"
+    ],
+    [
+      "Sors dehors",
+      "un instant"
+    ],
+    [
+      "Personne",
+      "ne lit ceci"
+    ],
+    [
+      "Sauvegarde",
+      "ton travail"
+    ],
+    [
+      "Ça compile",
+      "n'y touche plus"
+    ],
+    [
+      "Deux minutes",
+      "disait-il"
+    ],
+    [
+      "Provisoire",
+      "depuis 2019"
+    ],
+    [
+      "Tout va bien",
+      "probablement"
+    ],
+    [
+      "C'est la faute",
+      "du cache"
+    ],
+    [
+      "Le café",
+      "est un plan"
+    ],
+    [
+      "Lève-toi",
+      "et étire-toi"
+    ],
+    [
+      "Plus tard",
+      "veut dire jamais"
+    ],
+    [
+      "Le bug",
+      "est dans ton test"
+    ],
+    [
+      "Encore",
+      "un dernier truc"
+    ],
+    [
+      "Il est tard",
+      "va dormir"
+    ]
+  ]
+}

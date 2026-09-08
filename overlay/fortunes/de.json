@@ -1,0 +1,87 @@
+{
+  "lang": "de",
+  "name": "Deutsch",
+  "note": "Short lines only: the mosaic rasterizes each line separately and stays legible at a few words.",
+  "fortunes": [
+    [
+      "Ging gestern",
+      "noch"
+    ],
+    [
+      "Läuft bei",
+      "mir"
+    ],
+    [
+      "Fast fertig",
+      "seit Dienstag"
+    ],
+    [
+      "Kein Bug",
+      "ein Feature"
+    ],
+    [
+      "Kommt raus",
+      "am Montag"
+    ],
+    [
+      "Lies die",
+      "Fehlermeldung"
+    ],
+    [
+      "Geh kurz",
+      "raus"
+    ],
+    [
+      "Niemand liest",
+      "das hier"
+    ],
+    [
+      "Speichern",
+      "nicht vergessen"
+    ],
+    [
+      "Es kompiliert",
+      "nichts anfassen"
+    ],
+    [
+      "Zwei Minuten",
+      "sagte er"
+    ],
+    [
+      "Vorläufig",
+      "seit 2019"
+    ],
+    [
+      "Alles gut",
+      "vermutlich"
+    ],
+    [
+      "Schuld ist",
+      "der Cache"
+    ],
+    [
+      "Kaffee",
+      "ist ein Plan"
+    ],
+    [
+      "Steh auf",
+      "streck dich"
+    ],
+    [
+      "Später",
+      "heißt nie"
+    ],
+    [
+      "Der Fehler",
+      "ist im Test"
+    ],
+    [
+      "Nur noch",
+      "eine Sache"
+    ],
+    [
+      "Es ist spät",
+      "geh schlafen"
+    ]
+  ]
+}

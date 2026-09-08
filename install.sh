@@ -28,19 +28,22 @@ python3 -c "import cairo" >/dev/null || {
   exit 1
 }
 
-mkdir -p "$OVERLAY/default/foot" "$OVERLAY/logos" "$BIN"
+mkdir -p "$OVERLAY/default/foot" "$OVERLAY/logos" "$OVERLAY/fortunes" "$BIN"
 
 install -m 755 "$ROOT/overlay/run-foot.sh" "$OVERLAY/run-foot.sh"
 install -m 755 "$ROOT/overlay/generate-branding.py" "$OVERLAY/generate-branding.py"
 install -m 755 "$ROOT/overlay/convert-image.py" "$OVERLAY/convert-image.py"
 install -m 755 "$ROOT/overlay/apply-settings.py" "$OVERLAY/apply-settings.py"
+install -m 755 "$ROOT/overlay/pick-fortune.py" "$OVERLAY/pick-fortune.py"
 install -m 644 "$ROOT/overlay/fonts.conf" "$OVERLAY/fonts.conf"
 install -m 644 "$ROOT/overlay/default/foot/screensaver.ini" "$OVERLAY/default/foot/screensaver.ini"
 install -m 644 "$ROOT/overlay/logos/"*.svg "$OVERLAY/logos/"
+install -m 644 "$ROOT/overlay/fortunes/"*.json "$OVERLAY/fortunes/"
 
 install -m 755 "$ROOT/bin/omarchy-launch-screensaver" "$BIN/omarchy-launch-screensaver"
 install -m 755 "$ROOT/bin/omarchy-screensaver" "$BIN/omarchy-screensaver"
 install -m 755 "$ROOT/bin/omarchy-adwaita-screensaver-generate" "$BIN/omarchy-adwaita-screensaver-generate"
+install -m 755 "$ROOT/bin/omarchy-adwaita-screensaver-fortunes" "$BIN/omarchy-adwaita-screensaver-fortunes"
 
 # v0.2 shipped a PATH shim at ~/.local/bin/foot that shadowed the real terminal.
 # It is gone: our own omarchy-launch-screensaver calls run-foot.sh directly, and

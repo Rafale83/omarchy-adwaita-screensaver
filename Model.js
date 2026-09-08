@@ -1,4 +1,8 @@
-.pragma library
+// Deliberately NOT `.pragma library`. Quickshell evaluates a pragma-library
+// script once per engine and does not re-evaluate it when a plugin is hot
+// reloaded, so edits here would not reach a running shell -- the panel kept
+// showing a stale Source list while the new file sat on disk. This holds only
+// constants and pure functions, so a copy per importer costs nothing.
 
 var ALL_EFFECTS = [
   "beams", "binarypath", "blackhole", "bouncyballs", "bubbles", "burn",
@@ -29,9 +33,35 @@ var LOGOS = [
 
 var SOURCES = [
   { value: "text", label: "Text" },
+  { value: "fortune", label: "Fortune cookies" },
   { value: "logo", label: "AI logo" },
   { value: "photo", label: "Photo" }
 ]
+
+var FORTUNE_LANGS = [
+  { value: "en", label: "English" },
+  { value: "fr", label: "Fran\u00e7ais" },
+  { value: "es", label: "Espa\u00f1ol" },
+  { value: "de", label: "Deutsch" },
+  { value: "zh", label: "\u4e2d\u6587 (Mandarin)" }
+]
+
+var DEFAULT_FONT = "Adwaita Mono"
+var DEFAULT_COLS = 300
+
+function fontOptions(families) {
+  var seen = {}
+  var out = []
+  var all = (families || []).concat([DEFAULT_FONT])
+  for (var i = 0; i < all.length; i++) {
+    var name = String(all[i] || "").trim()
+    if (!name || seen[name]) continue
+    seen[name] = true
+    out.push({ value: name, label: name })
+  }
+  out.sort(function(a, b) { return a.label.localeCompare(b.label) })
+  return out
+}
 
 function effectOptions() {
   return ALL_EFFECTS.map(function(name) { return { value: name, label: name } })

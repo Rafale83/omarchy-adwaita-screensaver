@@ -8,22 +8,76 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
 import cairo
 
 FONT = os.environ.get("SS_FONT", "Adwaita Mono")
+DEFAULT_FONT = "Adwaita Mono"
+# Cairo's toy font API silently substitutes when a family is missing or lacks a
+# glyph, so an unreadable mosaic is the only symptom. Ask fontconfig first.
+CJK_FALLBACKS = ("Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans CJK HK", "Noto Sans CJK JP")
+
+
+def family_exists(name: str) -> bool:
+    if not shutil.which("fc-list"):
+        return True
+    try:
+        out = subprocess.run(
+            ["fc-list", f":family={name}", "family"],
+            capture_output=True, text=True, timeout=5,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return True
+    return bool(out.strip())
+
+
+def covers_lang(name: str, lang: str) -> bool:
+    if not shutil.which("fc-list"):
+        return True
+    try:
+        out = subprocess.run(
+            ["fc-list", f":lang={lang}:family={name}", "family"],
+            capture_output=True, text=True, timeout=5,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return True
+    return bool(out.strip())
+
+
+def needs_cjk(texts: list[str]) -> bool:
+    return any(
+        "\u3000" <= ch <= "\u9fff" or "\uf900" <= ch <= "\ufaff"
+        for text in texts for ch in text
+    )
+
+
+def resolve_font(name: str, texts: list[str]) -> str:
+    """Pick a family that actually exists and can draw this text."""
+    font = (name or "").strip() or DEFAULT_FONT
+    if not family_exists(font):
+        sys.stderr.write(f"font not installed: {font!r}, falling back to {DEFAULT_FONT!r}\n")
+        font = DEFAULT_FONT
+    if needs_cjk(texts) and not covers_lang(font, "zh-cn"):
+        for candidate in CJK_FALLBACKS:
+            if family_exists(candidate):
+                sys.stderr.write(f"{font!r} has no CJK coverage, using {candidate!r}\n")
+                return candidate
+        sys.stderr.write("no CJK font found; the mosaic will show blanks\n")
+    return font
 OUT = Path(os.environ.get("SS_OUT", Path.home() / ".config/omarchy/branding/screensaver.txt"))
 MESSAGE_FILE = Path.home() / ".config/omarchy/branding/screensaver-message"
 TARGET_COLS = int(os.environ.get("SS_COLS", "400"))
 RENDER_SIZE = float(os.environ.get("SS_RENDER_SIZE", "400"))
 
 
-def rasterize(text: str, font_size: float) -> list[list[bool]]:
+def rasterize(text: str, font_size: float, font: str) -> list[list[bool]]:
     dummy = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)
     ctx = cairo.Context(dummy)
-    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.select_font_face(font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
     ctx.set_font_size(font_size)
     xb, yb, tw, th, xa, ya = ctx.text_extents(text)
     pad = 4
@@ -34,7 +88,7 @@ def rasterize(text: str, font_size: float) -> list[list[bool]]:
     ctx.set_source_rgb(0, 0, 0)
     ctx.paint()
     ctx.set_source_rgb(1, 1, 1)
-    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.select_font_face(font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
     ctx.set_font_size(font_size)
     ctx.move_to(pad - xb, pad - yb)
     ctx.show_text(text)
@@ -123,10 +177,12 @@ def main() -> None:
     parser.add_argument("lines", nargs="*", help="One mosaic row per argument")
     parser.add_argument("-f", "--file", help="Plain-text message file")
     parser.add_argument("-c", "--cols", type=int, default=TARGET_COLS)
+    parser.add_argument("--font", default=FONT, help="Font family used to draw the letters")
     args = parser.parse_args()
 
     texts = load_lines(args)
-    raw = [trim(rasterize(text, RENDER_SIZE)) for text in texts]
+    font = resolve_font(args.font, texts)
+    raw = [trim(rasterize(text, RENDER_SIZE, font)) for text in texts]
     widest = max(len(p[0]) for p in raw)
     scale = args.cols / widest
     mosaic_rows = []
@@ -138,7 +194,7 @@ def main() -> None:
     art = "\n\n".join(to_halfblocks(row) for row in mosaic_rows) + "\n"
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(art)
-    print(f"Wrote {OUT} ({args.cols} cols, {len(texts)} line(s))")
+    print(f"Wrote {OUT} ({args.cols} cols, {len(texts)} line(s), font {font!r})")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,189 @@
+#!/bin/bash
+# Fetch optional fortune databases into the user's XDG data directory.
+#
+# Opt-in on purpose: install.sh never calls this, and the plugin works without
+# it -- the bundled corpora are the guarantee, these are extra variety. The
+# packages come from the Debian archive; they were dropped after Debian 11 and
+# have no Arch equivalent.
+#
+# Writes only under $XDG_DATA_HOME/fortune (default ~/.local/share/fortune).
+# Needs no root and refuses to run as root.
+
+set -euo pipefail
+
+BASE="https://archive.debian.org/debian/pool/main/f"
+DEST_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/fortune"
+
+lang_package() {
+  case "$1" in
+  fr) echo "fortunes-fr/fortunes-fr_0.65+nmu3_all.deb" ;;
+  es) echo "fortunes-es/fortunes-es_1.36_all.deb" ;;
+  zh) echo "fortune-zh/fortunes-zh_2.97_all.deb" ;;
+  *) return 1 ;;
+  esac
+}
+
+LANGS=(fr es zh)
+
+usage() {
+  cat <<EOF
+Usage: ${0##*/} [--list] [--dest DIR] <lang...>
+
+Downloads Debian fortune databases and installs them for the screensaver.
+Languages: ${LANGS[*]}
+
+  ${0##*/} fr es zh     install all three
+  ${0##*/} --list       show what is installed now
+
+Destination: $DEST_ROOT
+The plugin already ships short bundled quotes in English, French, Spanish,
+German and Mandarin; these packages only add variety.
+EOF
+}
+
+need() {
+  command -v "$1" >/dev/null || {
+    echo "missing dependency: $1" >&2
+    exit 1
+  }
+}
+
+list_installed() {
+  local lang dir count
+  for lang in "${LANGS[@]}" en de; do
+    dir="$DEST_ROOT/$lang"
+    if [[ -d $dir ]]; then
+      count=$(find "$dir" -maxdepth 1 -type f ! -name '*.dat' | wc -l)
+      printf '%-4s %s (%s databases)\n' "$lang" "$dir" "$count"
+    else
+      printf '%-4s not installed\n' "$lang"
+    fi
+  done
+}
+
+install_lang() {
+  local lang="$1" pkg url tmp payload src dest base name
+  pkg=$(lang_package "$lang") || {
+    echo "unknown language: $lang (known: ${LANGS[*]})" >&2
+    return 1
+  }
+  url="$BASE/$pkg"
+  dest="$DEST_ROOT/$lang"
+
+  tmp=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '$tmp'" RETURN
+
+  echo "$lang: downloading ${pkg##*/}"
+  if ! curl -fsSL --max-time 300 -o "$tmp/pkg.deb" "$url"; then
+    echo "$lang: download failed ($url)" >&2
+    return 1
+  fi
+
+  payload=$(bsdtar tf "$tmp/pkg.deb" 2>/dev/null | grep -m1 '^data\.tar')
+  [[ -n $payload ]] || {
+    echo "$lang: not a Debian package" >&2
+    return 1
+  }
+
+  mkdir -p "$tmp/x"
+  bsdtar xOf "$tmp/pkg.deb" "$payload" | bsdtar xf - -C "$tmp/x"
+
+  mkdir -p "$dest"
+  local installed=0
+  # Take every plain file and let the "%" check below decide what is a database.
+  # Skipped outright: .dat indexes (rebuilt locally), and .u8 files, which are
+  # empty markers telling fortune the sibling is UTF-8 -- which it already is.
+  while IFS= read -r src; do
+    base=${src##*/}
+    install -m 644 "$src" "$dest/$base"
+    installed=$((installed + 1))
+  done < <(find "$tmp/x" -type f -size +0 \
+    ! -path '*/doc/*' ! -path '*/man/*' ! -path '*/lintian/*' ! -path '*/usr/games/*' \
+    ! -name '*.dat' ! -name '*.u8' ! -name '*.gz' \
+    2>/dev/null | sort)
+
+  ((installed)) || {
+    echo "$lang: no fortune files found in the package" >&2
+    return 1
+  }
+
+  local built=0 dropped=0
+  for src in "$dest"/*; do
+    [[ -f $src && $src != *.dat ]] || continue
+    # A fortune database separates entries with a lone "%". Anything without one
+    # is documentation that happened to sit in the same directory.
+    if ! grep -qx '%' "$src"; then
+      rm -f "$src" "$src.dat"
+      dropped=$((dropped + 1))
+      continue
+    fi
+    if strfile "$src" "$src.dat" >/dev/null 2>&1; then
+      built=$((built + 1))
+    else
+      rm -f "$src" "$src.dat"
+      dropped=$((dropped + 1))
+    fi
+  done
+  ((built)) || {
+    echo "$lang: package held no usable fortune database" >&2
+    return 1
+  }
+
+  echo "$lang: $built databases in $dest ($dropped non-database files skipped)"
+}
+
+main() {
+  [[ $EUID -ne 0 ]] || {
+    echo "refusing to run as root: this installs into your home directory" >&2
+    exit 1
+  }
+
+  local langs=()
+  while (($#)); do
+    case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    --list)
+      list_installed
+      exit 0
+      ;;
+    --dest)
+      DEST_ROOT="$2"
+      shift 2
+      ;;
+    -*)
+      usage >&2
+      exit 2
+      ;;
+    *)
+      langs+=("$1")
+      shift
+      ;;
+    esac
+  done
+
+  ((${#langs[@]})) || {
+    usage >&2
+    exit 2
+  }
+
+  need curl
+  need bsdtar
+  need strfile
+
+  local lang failed=0
+  for lang in "${langs[@]}"; do
+    install_lang "$lang" || failed=1
+  done
+
+  echo
+  echo "Pick the language in the Hires screensaver panel; it uses these"
+  echo "automatically and falls back to the bundled quotes when a language"
+  echo "has no database."
+  exit "$failed"
+}
+
+main "$@"

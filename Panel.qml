@@ -24,7 +24,10 @@ Panel {
     photo: "",
     excludeEffects: Model.DEFAULT_EXCLUDES.slice(),
     screensaverSeconds: 150,
-    lockSeconds: 300
+    lockSeconds: 300,
+    font: Model.DEFAULT_FONT,
+    fortuneLang: "en",
+    artworkCols: Model.DEFAULT_COLS
   })
   property string statusText: ""
   property bool applying: false
@@ -36,12 +39,15 @@ Panel {
   property bool updateAvailable: false
   property bool updating: false
   property bool verifyingUpdate: false
+  property var fontOptions: Model.fontOptions([])
+  property string fontWarning: ""
 
   function open() {
     openedFromHotkey = false
     setCenterHoverRevealSuppressed(false)
     settingsFile.reload()
     root.checkForUpdate()
+    root.loadFonts()
     root.controller.show()
   }
 
@@ -49,6 +55,7 @@ Panel {
     openedFromHotkey = true
     settingsFile.reload()
     root.checkForUpdate()
+    root.loadFonts()
     root.controller.show()
     Qt.callLater(function() {
       if (root.opened) setCenterHoverRevealSuppressed(true)
@@ -84,7 +91,10 @@ Panel {
       photo: "",
       excludeEffects: Model.DEFAULT_EXCLUDES.slice(),
       screensaverSeconds: 150,
-      lockSeconds: 300
+      lockSeconds: 300,
+      font: Model.DEFAULT_FONT,
+      fortuneLang: "en",
+      artworkCols: Model.DEFAULT_COLS
     }
     try {
       var parsed = JSON.parse(raw || "{}")
@@ -92,6 +102,7 @@ Panel {
     } catch (e) {}
     root.draft = next
     if (textField) textField.text = next.text || ""
+    if (fontField) fontField.text = next.font || Model.DEFAULT_FONT
   }
 
   function numberFieldValue(field, fallback) {
@@ -117,6 +128,9 @@ Panel {
     d.screensaverSeconds = root.numberFieldValue(screensaverField, d.screensaverSeconds)
     d.lockSeconds = root.numberFieldValue(lockField, d.lockSeconds)
     if (excludeSelect) d.excludeEffects = excludeSelect.values
+    if (fontField && fontField.text.trim() !== "") d.font = fontField.text.trim()
+    if (langDropdown) d.fortuneLang = langDropdown.value
+    d.artworkCols = root.numberFieldValue(colsField, d.artworkCols)
     root.draft = d
     return d
   }
@@ -142,6 +156,22 @@ Panel {
   function preview() {
     root.close()
     previewTimer.restart()
+  }
+
+  function loadFonts() {
+    fontsProc.running = false
+    Qt.callLater(function() { fontsProc.running = true })
+  }
+
+  function validateFont(name) {
+    var wanted = String(name || "").trim()
+    if (wanted === "") {
+      root.fontWarning = ""
+      return
+    }
+    fontCheckProc.running = false
+    fontCheckProc.wanted = wanted
+    Qt.callLater(function() { fontCheckProc.running = true })
   }
 
   function checkForUpdate() {
@@ -198,6 +228,28 @@ Panel {
     onLoadFailed: {
       root.localVersion = ""
       root.verifyingUpdate = false
+    }
+  }
+
+  Process {
+    id: fontsProc
+    command: ["bash", "-lc", "fc-list :spacing=100 family | tr ',' '\\n' | sed 's/^ *//;s/ *$//' | sort -u"]
+    stdout: StdioCollector { waitForEnd: true }
+    onExited: function(code) {
+      if (code !== 0) return
+      var families = String(stdout.text || "").split("\n").filter(function(s) { return s.trim() !== "" })
+      root.fontOptions = Model.fontOptions(families)
+    }
+  }
+
+  Process {
+    id: fontCheckProc
+    property string wanted: ""
+    command: ["bash", "-lc", "fc-list :family=\"$0\" family | head -1", fontCheckProc.wanted]
+    stdout: StdioCollector { waitForEnd: true }
+    onExited: function(code) {
+      var found = String(stdout.text || "").trim() !== ""
+      root.fontWarning = found ? "" : "Font not installed — Adwaita Mono will be used"
     }
   }
 
@@ -417,6 +469,31 @@ Panel {
           }
 
           Dropdown {
+            id: langDropdown
+            visible: root.draft.source === "fortune"
+            width: parent.width - Style.space(32)
+            label: "Fortune language"
+            value: root.draft.fortuneLang
+            options: Model.FORTUNE_LANGS
+            onChanged: function(v) {
+              var d = JSON.parse(JSON.stringify(root.draft))
+              d.fortuneLang = v
+              root.draft = d
+              root.scheduleApply()
+            }
+          }
+
+          Text {
+            visible: root.draft.source === "fortune"
+            width: parent.width - Style.space(32)
+            wrapMode: Text.WordWrap
+            textFormat: Text.PlainText
+            text: "A new quote before every effect cycle. Uses the system fortune command when it has a database for the language, otherwise the bundled short ones."
+            color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
+            font.pixelSize: Style.font.caption
+          }
+
+          Dropdown {
             id: logoDropdown
             visible: root.draft.source === "logo"
             width: parent.width - Style.space(32)
@@ -443,6 +520,86 @@ Panel {
             wrapMode: Text.WordWrap
             textFormat: Text.PlainText
             text: "Phone photos are fine. EXIF rotation, 25 MB cap, auto-downscale, truecolor ASCII (not 2-tone)."
+            color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
+            font.pixelSize: Style.font.caption
+          }
+
+          PanelSectionHeader {
+            text: "Font"
+            visible: root.draft.source === "text" || root.draft.source === "fortune"
+          }
+
+          Dropdown {
+            id: fontDropdown
+            visible: root.draft.source === "text" || root.draft.source === "fortune"
+            width: parent.width - Style.space(32)
+            label: "Installed monospace"
+            value: root.draft.font
+            options: root.fontOptions
+            onChanged: function(v) {
+              if (fontField) fontField.text = v
+              var d = JSON.parse(JSON.stringify(root.draft))
+              d.font = v
+              root.draft = d
+              root.fontWarning = ""
+              root.scheduleApply()
+            }
+          }
+
+          TextField {
+            id: fontField
+            visible: root.draft.source === "text" || root.draft.source === "fortune"
+            width: parent.width - Style.space(32)
+            placeholderText: "Or type any installed family"
+            onEditingFinished: {
+              root.validateFont(text)
+              root.scheduleApply()
+            }
+          }
+
+          Text {
+            visible: (root.draft.source === "text" || root.draft.source === "fortune")
+                     && root.fontWarning !== ""
+            width: parent.width - Style.space(32)
+            wrapMode: Text.WordWrap
+            textFormat: Text.PlainText
+            text: root.fontWarning
+            color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
+            font.pixelSize: Style.font.caption
+          }
+
+          NumberField {
+            id: colsField
+            visible: root.draft.source === "text" || root.draft.source === "fortune"
+            label: "Size (mosaic columns)"
+            value: root.draft.artworkCols
+            from: 120
+            to: 640
+            stepSize: 20
+            onModified: function(v) {
+              var d = JSON.parse(JSON.stringify(root.draft))
+              d.artworkCols = v
+              root.draft = d
+              root.scheduleApply()
+            }
+          }
+
+          Text {
+            visible: root.draft.source === "text" || root.draft.source === "fortune"
+            width: parent.width - Style.space(32)
+            wrapMode: Text.WordWrap
+            textFormat: Text.PlainText
+            text: "Width of the mosaic in terminal cells, and the height follows. Lower is smaller. 400 is the default and fills most of the screen."
+            color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
+            font.pixelSize: Style.font.caption
+          }
+
+          Text {
+            visible: root.draft.source === "fortune" && root.draft.fortuneLang === "zh"
+            width: parent.width - Style.space(32)
+            wrapMode: Text.WordWrap
+            textFormat: Text.PlainText
+            text: "Mandarin needs CJK glyphs. A font without them is swapped for Noto Sans CJK automatically."
             color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
             font.pixelSize: Style.font.caption
           }
