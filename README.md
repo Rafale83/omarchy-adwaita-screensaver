@@ -1,4 +1,4 @@
-# Omarchy Adwaita hires screensaver · v0.2.1
+# Omarchy Adwaita hires screensaver · v0.2.2
 
 <p align="center">
   <img src="preview.gif" width="400" height="300" alt="Hires Screensaver — blackhole, 60s">
@@ -19,6 +19,11 @@ Omarchy’s screensaver is genuinely magnificent, but:
 - The text deserves to be editable.
 
 This module addresses those three points. It does **not** ship any personal branding. You supply the words; it rasterizes them into a dense block mosaic and plays them with `ttfx` on the real fullscreen grid (not the 80×24 pty that the stock launcher often captures).
+
+### Release notes — v0.2.2
+
+- Fixed `install.sh` aborting when run from the installed plugin folder — the route the README documents after `omarchy plugin add`. `ROOT` and `PLUGIN_DST` were the same directory, `install` refused to copy each file onto itself, and `set -e` killed the script before it wrote the `PATH` blocks to `~/.bashrc` and `~/.config/hypr/hyprland.lua`. The overlay landed but the screensaver never started on idle.
+- The final line reports the version from `VERSION` instead of a hardcoded string.
 
 ### Release notes — v0.2.1
 
@@ -136,6 +141,11 @@ L’économiseur d’écran d’Omarchy est juste magnifique mais :
 - Le texte mériterait d’être modifiable.
 
 Ce module s’attaque à ces trois points. Il **n’embarque aucune charte personnelle** : tu fournis les mots ; il les rasterise en mosaïque dense de blocs et les joue avec `ttfx` sur la vraie grille plein écran (pas le pty 80×24 que le lanceur d’origine capture trop souvent).
+
+### Notes de version — v0.2.2
+
+- Correction de `install.sh` qui s'interrompait quand on le lançait depuis le dossier du plugin installé — la route documentée dans le README après `omarchy plugin add`. `ROOT` et `PLUGIN_DST` désignaient le même répertoire, `install` refusait de copier chaque fichier sur lui-même, et `set -e` tuait le script avant l'écriture des blocs `PATH` dans `~/.bashrc` et `~/.config/hypr/hyprland.lua`. L'overlay était posé mais le screensaver ne démarrait jamais à l'inactivité.
+- La dernière ligne affiche la version lue dans `VERSION` au lieu d'une chaîne codée en dur.
 
 ### Notes de version — v0.2.1
 

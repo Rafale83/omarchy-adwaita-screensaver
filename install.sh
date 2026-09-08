@@ -61,7 +61,12 @@ remove_legacy_foot_shim
 PLUGIN_ID="rafale83.hires-screensaver"
 PLUGIN_DST="$HOME/.config/omarchy/plugins/$PLUGIN_ID"
 mkdir -p "$PLUGIN_DST"
-install -m 644 "$ROOT/manifest.json" "$ROOT/BarWidget.qml" "$ROOT/Panel.qml" "$ROOT/Model.js" "$PLUGIN_DST/"
+# Running from inside the installed plugin folder (the route the README
+# documents after `omarchy plugin add`) makes ROOT and PLUGIN_DST the same
+# directory, and `install` fails on copying a file onto itself.
+if [[ ! $ROOT -ef $PLUGIN_DST ]]; then
+  install -m 644 "$ROOT/manifest.json" "$ROOT/BarWidget.qml" "$ROOT/Panel.qml" "$ROOT/Model.js" "$PLUGIN_DST/"
+fi
 
 strip_block() {
   local file="$1" begin="$2" end="$3"
@@ -129,7 +134,7 @@ else
   echo "Copied the widget. Enable it with: omarchy plugin enable rafale83.hires-screensaver --section right"
 fi
 
-echo "Installed Adwaita hires screensaver v0.2."
+echo "Installed Adwaita hires screensaver v$(cat "$ROOT/VERSION")."
 echo "Open the bar widget to edit text, lock delays, effects, AI logos, or a photo."
 echo "CLI: omarchy-adwaita-screensaver-generate your text here"
 echo "Preview: omarchy-launch-screensaver force"
