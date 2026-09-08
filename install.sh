@@ -65,7 +65,7 @@ mkdir -p "$PLUGIN_DST"
 # documents after `omarchy plugin add`) makes ROOT and PLUGIN_DST the same
 # directory, and `install` fails on copying a file onto itself.
 if [[ ! $ROOT -ef $PLUGIN_DST ]]; then
-  install -m 644 "$ROOT/manifest.json" "$ROOT/BarWidget.qml" "$ROOT/Panel.qml" "$ROOT/Model.js" "$PLUGIN_DST/"
+  install -m 644 "$ROOT/manifest.json" "$ROOT/BarWidget.qml" "$ROOT/Panel.qml" "$ROOT/Model.js" "$ROOT/VERSION" "$PLUGIN_DST/"
 fi
 
 strip_block() {
@@ -127,6 +127,11 @@ if [[ -f $HYPR ]]; then
   hyprctl reload >/dev/null 2>&1 || true
 fi
 
+# Let the shell's own file watcher settle before asking for an explicit rescan.
+# Two reload paths landing in the same instant can race quickshell's engine
+# teardown (segfault in IpcHandler registration), especially if the user is
+# bouncing the shell at the same time.
+sleep 1
 omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
 if omarchy plugin enable rafale83.hires-screensaver --section right >/dev/null 2>&1; then
   echo "Enabled bar widget rafale83.hires-screensaver on the right."

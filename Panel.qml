@@ -29,16 +29,26 @@ Panel {
   property string statusText: ""
   property bool applying: false
 
+  readonly property string pluginDir: Quickshell.env("HOME") + "/.config/omarchy/plugins/" + Model.PLUGIN_ID
+  property string localVersion: ""
+  property string remoteVersion: ""
+  property string updateStatus: ""
+  property bool updateAvailable: false
+  property bool updating: false
+  property bool verifyingUpdate: false
+
   function open() {
     openedFromHotkey = false
     setCenterHoverRevealSuppressed(false)
     settingsFile.reload()
+    root.checkForUpdate()
     root.controller.show()
   }
 
   function openFromHotkey() {
     openedFromHotkey = true
     settingsFile.reload()
+    root.checkForUpdate()
     root.controller.show()
     Qt.callLater(function() {
       if (root.opened) setCenterHoverRevealSuppressed(true)
@@ -134,6 +144,25 @@ Panel {
     previewTimer.restart()
   }
 
+  function checkForUpdate() {
+    if (root.updating) return
+    root.updateStatus = "Checking…"
+    checkProc.running = false
+    Qt.callLater(function() { checkProc.running = true })
+  }
+
+  function runUpdate() {
+    if (root.updating || !root.updateAvailable) return
+    root.updating = true
+    root.updateStatus = "Updating…"
+    updateProc.running = false
+    Qt.callLater(function() { updateProc.running = true })
+  }
+
+  function restartShell() {
+    if (root.bar) root.bar.run("omarchy restart shell")
+  }
+
   FileView {
     id: settingsFile
     path: root.settingsPath
@@ -142,6 +171,84 @@ Panel {
     onFileChanged: reload()
     onLoaded: root.mergeDraft(text())
     onLoadFailed: root.mergeDraft("{}")
+  }
+
+  FileView {
+    id: versionFile
+    path: root.pluginDir + "/VERSION"
+    watchChanges: true
+    printErrors: false
+    onFileChanged: reload()
+    onLoaded: {
+      root.localVersion = String(text() || "").trim()
+      if (root.verifyingUpdate) {
+        root.verifyingUpdate = false
+        // `omarchy plugin update` can exit 0 without pulling anything -- a dirty
+        // checkout, or already at the newest commit. Trust VERSION, not the exit code.
+        if (root.remoteVersion && Model.compareVersions(root.localVersion, root.remoteVersion) >= 0) {
+          root.updateAvailable = false
+          root.updateStatus = "Updated to v" + root.localVersion + " — restart the shell to load it"
+        } else {
+          root.updateAvailable = true
+          root.updateStatus = "Update did not apply — still v" + root.localVersion
+                              + " (local changes in the plugin folder?)"
+        }
+      }
+    }
+    onLoadFailed: {
+      root.localVersion = ""
+      root.verifyingUpdate = false
+    }
+  }
+
+  Process {
+    id: checkProc
+    command: ["curl", "-fsSL", "--max-time", "10", Model.VERSION_URL]
+    stdout: StdioCollector { waitForEnd: true }
+    stderr: StdioCollector { waitForEnd: true }
+    onExited: function(code) {
+      if (code !== 0) {
+        root.updateStatus = "Update check failed (offline?)"
+        root.updateAvailable = false
+        return
+      }
+      var remote = String(stdout.text || "").trim()
+      if (!Model.isVersion(remote)) {
+        root.updateStatus = "Update check failed (unexpected reply)"
+        root.updateAvailable = false
+        return
+      }
+      root.remoteVersion = remote
+      if (!root.localVersion) {
+        root.updateStatus = "Latest is v" + remote
+        root.updateAvailable = false
+      } else if (Model.compareVersions(remote, root.localVersion) > 0) {
+        root.updateStatus = "v" + remote + " is available"
+        root.updateAvailable = true
+      } else {
+        root.updateStatus = "Up to date"
+        root.updateAvailable = false
+      }
+    }
+  }
+
+  Process {
+    id: updateProc
+    command: ["bash", "-lc",
+      "omarchy plugin update " + Model.PLUGIN_ID + " --yes && " +
+      "\"$HOME/.config/omarchy/plugins/" + Model.PLUGIN_ID + "/install.sh\""]
+    stdout: StdioCollector { waitForEnd: true }
+    stderr: StdioCollector { waitForEnd: true }
+    onExited: function(code) {
+      root.updating = false
+      if (code === 0) {
+        root.updateStatus = "Verifying…"
+        root.verifyingUpdate = true
+        versionFile.reload()
+      } else {
+        root.updateStatus = String(stderr.text || stdout.text || "update failed").trim()
+      }
+    }
   }
 
   Process {
@@ -236,13 +343,53 @@ Panel {
           leftPadding: Style.space(16)
           rightPadding: Style.space(16)
 
-          Text {
-            textFormat: Text.PlainText
-            text: "Hires screensaver"
-            color: root.bar ? root.bar.foreground : Color.foreground
-            font.family: root.bar ? root.bar.fontFamily : Style.font.family
-            font.pixelSize: Style.font.display
-            font.bold: true
+          Row {
+            width: parent.width - Style.space(32)
+            spacing: Style.space(8)
+
+            Text {
+              textFormat: Text.PlainText
+              text: "Hires screensaver"
+              color: root.bar ? root.bar.foreground : Color.foreground
+              font.family: root.bar ? root.bar.fontFamily : Style.font.family
+              font.pixelSize: Style.font.display
+              font.bold: true
+            }
+
+            Text {
+              anchors.verticalCenter: parent.verticalCenter
+              visible: root.localVersion !== ""
+              textFormat: Text.PlainText
+              text: "v" + root.localVersion
+              color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
+              font.pixelSize: Style.font.caption
+            }
+          }
+
+          Row {
+            spacing: Style.space(8)
+            visible: root.updateStatus !== ""
+
+            Text {
+              anchors.verticalCenter: parent.verticalCenter
+              textFormat: Text.PlainText
+              text: root.updateStatus
+              color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
+              font.pixelSize: Style.font.caption
+            }
+
+            Button {
+              visible: root.updateAvailable && !root.updating
+              text: "Update to v" + root.remoteVersion
+              onClicked: root.runUpdate()
+            }
+
+            Button {
+              visible: !root.updateAvailable && !root.updating
+                       && root.updateStatus.indexOf("restart the shell") >= 0
+              text: "Restart shell"
+              onClicked: root.restartShell()
+            }
           }
 
           PanelSectionHeader { text: "Artwork" }

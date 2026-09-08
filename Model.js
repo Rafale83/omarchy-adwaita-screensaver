@@ -36,3 +36,25 @@ var SOURCES = [
 function effectOptions() {
   return ALL_EFFECTS.map(function(name) { return { value: name, label: name } })
 }
+
+var PLUGIN_ID = "rafale83.hires-screensaver"
+var VERSION_URL = "https://raw.githubusercontent.com/Rafale83/omarchy-adwaita-screensaver/main/VERSION"
+
+// -1 if a < b, 0 if equal, 1 if a > b. Missing or non-numeric parts count as 0,
+// so "0.2" and "0.2.0" compare equal and garbage never reads as an upgrade.
+function compareVersions(a, b) {
+  var pa = String(a || "").trim().split(".")
+  var pb = String(b || "").trim().split(".")
+  for (var i = 0; i < 3; i++) {
+    var na = parseInt(pa[i], 10)
+    var nb = parseInt(pb[i], 10)
+    if (isNaN(na)) na = 0
+    if (isNaN(nb)) nb = 0
+    if (na !== nb) return na < nb ? -1 : 1
+  }
+  return 0
+}
+
+function isVersion(s) {
+  return /^[0-9]+(\.[0-9]+){0,2}$/.test(String(s || "").trim())
+}
