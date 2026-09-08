@@ -38,10 +38,25 @@ install -m 644 "$ROOT/overlay/fonts.conf" "$OVERLAY/fonts.conf"
 install -m 644 "$ROOT/overlay/default/foot/screensaver.ini" "$OVERLAY/default/foot/screensaver.ini"
 install -m 644 "$ROOT/overlay/logos/"*.svg "$OVERLAY/logos/"
 
-install -m 755 "$ROOT/bin/foot" "$BIN/foot"
 install -m 755 "$ROOT/bin/omarchy-launch-screensaver" "$BIN/omarchy-launch-screensaver"
 install -m 755 "$ROOT/bin/omarchy-screensaver" "$BIN/omarchy-screensaver"
 install -m 755 "$ROOT/bin/omarchy-adwaita-screensaver-generate" "$BIN/omarchy-adwaita-screensaver-generate"
+
+# v0.2 shipped a PATH shim at ~/.local/bin/foot that shadowed the real terminal.
+# It is gone: our own omarchy-launch-screensaver calls run-foot.sh directly, and
+# run-foot.sh execs /usr/bin/foot by absolute path, so nothing needs the shim.
+# Remove a leftover only when it is byte-for-byte the wrapper this project
+# shipped -- never a regular file, symlink, or wrapper we do not own.
+remove_legacy_foot_shim() {
+  local shim="$HOME/.local/bin/foot"
+  [[ -f $shim && ! -L $shim ]] || return 0
+  grep -qF 'Intercept the packaged screensaver launcher, which hardcodes JetBrains Mono.' "$shim" || return 0
+  grep -qF 'exec "$HOME/.config/omarchy/screensaver-overlay/run-foot.sh"' "$shim" || return 0
+  rm -f "$shim"
+  echo "Removed the obsolete ~/.local/bin/foot shim left by v0.2."
+}
+
+remove_legacy_foot_shim
 
 PLUGIN_ID="rafale83.hires-screensaver"
 PLUGIN_DST="$HOME/.config/omarchy/plugins/$PLUGIN_ID"

@@ -1,4 +1,4 @@
-# Omarchy Adwaita hires screensaver · v0.2
+# Omarchy Adwaita hires screensaver · v0.2.1
 
 <p align="center">
   <img src="preview.gif" width="400" height="300" alt="Hires Screensaver — blackhole, 60s">
@@ -19,6 +19,11 @@ Omarchy’s screensaver is genuinely magnificent, but:
 - The text deserves to be editable.
 
 This module addresses those three points. It does **not** ship any personal branding. You supply the words; it rasterizes them into a dense block mosaic and plays them with `ttfx` on the real fullscreen grid (not the 80×24 pty that the stock launcher often captures).
+
+### Release notes — v0.2.1
+
+- Removed the `~/.local/bin/foot` shim. It shadowed the real terminal on `PATH`, overwrote a pre-existing user wrapper on install, and deleted that path unconditionally on uninstall. Nothing needed it: `omarchy-launch-screensaver` calls `run-foot.sh` directly, and `run-foot.sh` execs `/usr/bin/foot` by absolute path.
+- Upgrading from v0.2 removes the leftover shim, but only when it is byte-for-byte the wrapper this project shipped. A foreign file or a symlink at that path is left alone.
 
 ### Release notes — v0.2
 
@@ -103,7 +108,6 @@ That removes the wrappers, overlay, and bar widget (`omarchy plugin remove rafal
 install.sh
 uninstall.sh
 VERSION
-bin/foot                              screensaver-only Foot wrapper
 bin/omarchy-launch-screensaver
 bin/omarchy-screensaver               wait for fullscreen grid, then ttfx
 bin/omarchy-adwaita-screensaver-generate
@@ -132,6 +136,11 @@ L’économiseur d’écran d’Omarchy est juste magnifique mais :
 - Le texte mériterait d’être modifiable.
 
 Ce module s’attaque à ces trois points. Il **n’embarque aucune charte personnelle** : tu fournis les mots ; il les rasterise en mosaïque dense de blocs et les joue avec `ttfx` sur la vraie grille plein écran (pas le pty 80×24 que le lanceur d’origine capture trop souvent).
+
+### Notes de version — v0.2.1
+
+- Suppression du shim `~/.local/bin/foot`. Il masquait le vrai terminal dans le `PATH`, écrasait un wrapper utilisateur préexistant à l'installation et supprimait ce chemin sans condition à la désinstallation. Rien n'en dépendait : `omarchy-launch-screensaver` appelle `run-foot.sh` directement, et `run-foot.sh` exécute `/usr/bin/foot` en chemin absolu.
+- La mise à jour depuis la v0.2 retire le shim résiduel, uniquement s'il correspond exactement au wrapper livré par ce projet. Un fichier étranger ou un lien symbolique à cet emplacement n'est pas touché.
 
 ### Notes de version — v0.2
 
@@ -216,7 +225,6 @@ Une touche ou un mouvement de souris le ferme. L’inactivité Omarchy le lance 
 install.sh
 uninstall.sh
 VERSION
-bin/foot                              wrapper Foot, économiseur uniquement
 bin/omarchy-launch-screensaver
 bin/omarchy-screensaver               attend la grille plein écran, puis ttfx
 bin/omarchy-adwaita-screensaver-generate
