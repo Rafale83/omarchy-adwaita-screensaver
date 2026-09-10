@@ -7,6 +7,7 @@ screensaver_in_focus() {
 }
 
 exit_screensaver() {
+  printf '\033[?1003l\033[?1006l\033[=0;1u'
   hyprctl eval 'hl.config({ cursor = { invisible = false } })' &>/dev/null || hyprctl keyword cursor:invisible false &>/dev/null || true
   pkill -x ttfx 2>/dev/null
   ps -C foot -o pid=,args= | awk '/screensaver.ini/ {print $1}' | while read -r p; do kill "$p" 2>/dev/null; done
@@ -16,6 +17,12 @@ exit_screensaver() {
 trap exit_screensaver SIGINT SIGTERM SIGHUP SIGQUIT
 printf '\033]11;rgb:00/00/00\007'
 hyprctl eval 'hl.config({ cursor = { invisible = true } })' &>/dev/null || hyprctl keyword cursor:invisible true &>/dev/null
+
+# Wake on any input, not just keys that type a character. Mouse tracking
+# (any-motion + SGR) turns moves, clicks, and wheel into bytes on stdin, and the
+# kitty keyboard protocol's "report all keys" flag does the same for a lone
+# Shift, Ctrl, or Alt. ttfx never touches these modes, so setting them once holds.
+printf '\033[?1003h\033[?1006h\033[=9;1u'
 
 tty=$(tty 2>/dev/null)
 
@@ -81,7 +88,7 @@ while true; do
     --random-effect "${exclude_args[@]}" --no-eol --no-restore-cursor &
 
   while pgrep -t "${tty#/dev/}" -x ttfx >/dev/null; do
-    if read -n1 -t 1 || ! screensaver_in_focus; then
+    if read -rsn1 -t 1 || ! screensaver_in_focus; then
       exit_screensaver
     fi
   done

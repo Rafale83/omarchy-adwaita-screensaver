@@ -1,4 +1,4 @@
-# Omarchy Adwaita hires screensaver · v0.3.1
+# Omarchy Adwaita hires screensaver · v0.3.2
 
 <p align="center">
   <img src="preview.gif" width="400" height="300" alt="Hires Screensaver — blackhole, 60s">
@@ -19,6 +19,10 @@ Omarchy’s screensaver is genuinely magnificent, but:
 - The text deserves to be editable.
 
 This module addresses those three points. It does **not** ship any personal branding. You supply the words; it rasterizes them into a dense block mosaic and plays them with `ttfx` on the real fullscreen grid (not the 80×24 pty that the stock launcher often captures).
+
+### Release notes — v0.3.2
+
+- Any input now dismisses the screensaver, not just keys that type a character. The script turns on Foot's mouse tracking (any-motion + SGR), so moving, clicking, or scrolling the mouse exits. It also turns on the kitty keyboard protocol's "report all keys" flag, so a lone Shift, Ctrl, or Alt exits too. Both modes are reset on exit. Super combinations still belong to Hyprland.
 
 ### Release notes — v0.3.1
 
@@ -118,7 +122,7 @@ Preview:
 omarchy-launch-screensaver force
 ```
 
-A key or mouse movement dismisses it. Idle still launches it through Omarchy.
+Any key (a lone Shift, Ctrl, or Alt included), mouse movement, click, or scroll dismisses it. Idle still launches it through Omarchy.
 
 ### Optional: more fortunes
 
@@ -187,6 +191,10 @@ L’économiseur d’écran d’Omarchy est juste magnifique mais :
 - Le texte mériterait d’être modifiable.
 
 Ce module s’attaque à ces trois points. Il **n’embarque aucune charte personnelle** : tu fournis les mots ; il les rasterise en mosaïque dense de blocs et les joue avec `ttfx` sur la vraie grille plein écran (pas le pty 80×24 que le lanceur d’origine capture trop souvent).
+
+### Notes de version — v0.3.2
+
+- N'importe quelle action ferme maintenant l'économiseur, pas seulement les touches qui tapent un caractère. Le script active le suivi de souris de Foot (tout mouvement + SGR) : bouger, cliquer ou faire défiler la molette le ferme. Il active aussi le drapeau « signaler toutes les touches » du protocole clavier kitty : Shift, Ctrl ou Alt seuls le ferment aussi. Les deux modes sont remis à zéro à la sortie. Les combinaisons avec Super restent à Hyprland.
 
 ### Notes de version — v0.3.1
 
@@ -286,7 +294,7 @@ Aperçu :
 omarchy-launch-screensaver force
 ```
 
-Une touche ou un mouvement de souris le ferme. L’inactivité Omarchy le lance toujours.
+N’importe quelle touche (Shift, Ctrl ou Alt seuls compris), un mouvement, un clic ou la molette de la souris le ferme. L’inactivité Omarchy le lance toujours.
 
 ### Optionnel : plus de citations
 

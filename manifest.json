@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "rafale83.hires-screensaver",
   "name": "Hires screensaver",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": "Rafael Pinilla",
   "license": "MIT",
   "description": "High-res Adwaita mosaic screensaver with a settings panel for text, lock timing, effects, AI logos, and photos.",
